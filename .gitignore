@@ -10,3 +10,5 @@ node_modules/
 .pytest_cache/
 knowledge-export.json
 .mcp.json
+package.json
+package-lock.json
