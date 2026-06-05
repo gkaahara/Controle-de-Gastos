@@ -1,4 +1,4 @@
-workflow-graph/
+# App
 data/
 dist/
 build/
@@ -6,9 +6,24 @@ __pycache__/
 *.pyc
 .venv/
 venv/
-node_modules/
 .pytest_cache/
 knowledge-export.json
+
+# AI tooling (opencode / mcp-graph / Claude)
+.agents/
+.claude/
+.claudeignore
+.copilotignore
+.github/
+.vscode/
+workflow-graph/
 .mcp.json
+AGENTS.md
+CLAUDE.md
+opencode.jsonc
+prd.md
+
+# Node (unused in this Python project)
+node_modules/
 package.json
 package-lock.json
