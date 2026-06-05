@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Controle de Gastos{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">Controle de Gastos</a>
+        <div class="nav-links">
+            <a href="/app/dashboard">Dashboard</a>
+            <a href="/app/categorias">Categorias</a>
+            <a href="/app/salarios">Salários</a>
+            <a href="/app/gastos_casa">Gastos Casa</a>
+            <a href="/app/cartoes">Cartões</a>
+            <a href="/app/relatorios">Relatórios</a>
+            <button id="btnFechar" style="background:none;border:none;color:#e06c75;cursor:pointer;font-size:0.9rem;margin-left:auto">Fechar</button>
+        </div>
+    </nav>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+    document.getElementById('btnFechar')?.addEventListener('click', async () => {
+        try { await fetch('/shutdown', { method: 'POST' }); } catch (_) {}
+        try { window.open('', '_self'); window.close(); } catch (_) {}
+    });
+    </script>
+</body>
+</html>

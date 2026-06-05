@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Controle de Gastos{% endblock %}
+{% block content %}
+<div class="dash-header">
+    <h1>Resumo Mensal</h1>
+    <form class="periodo-form" id="periodoForm">
+        <label>Mês:
+            <select name="mes" id="selMes">
+                {% for m in range(1,13) %}<option value="{{ m }}">{{ "%02d"|format(m) }}</option>{% endfor %}
+            </select>
+        </label>
+        <label>Ano:
+            <select name="ano" id="selAno"></select>
+        </label>
+        <label>Morador:
+            <select name="pessoa" id="selPessoa">
+                <option value="">Visão geral</option>
+                <option value="Gabriel">Gabriel</option>
+                <option value="Helena">Helena</option>
+            </select>
+        </label>
+        <button type="submit">Atualizar</button>
+    </form>
+</div>
+<div class="cards" id="dashCards">
+    <div class="card"><h3>Gastos Casa</h3><p class="card-valor" id="casa">-</p></div>
+    <div class="card"><h3>Cartões</h3><p class="card-valor" id="cartoes">-</p></div>
+    <div class="card"><h3>Salários</h3><p class="card-valor" id="salarios">-</p></div>
+    <div class="card"><h3>Saldo</h3><p class="card-valor" id="saldo">-</p></div>
+</div>
+<div class="dash-grid">
+    <div>
+        <h2>Gastos por Categoria</h2>
+        <table class="table" id="catTable">
+            <thead><tr><th>Categoria</th><th>Gastos Casa</th><th>Cartões</th><th>Total</th><th>%</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div>
+        <h2>Divisão Proporcional</h2>
+        <table class="table" id="divTable">
+            <thead><tr><th>Membro</th><th>Salário</th><th>%</th><th>Gastos Casa</th><th>Cartões</th><th>Total a Pagar</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<div id="resumo-individual" style="display:none">
+    <h2 id="resumo-titulo"></h2>
+    <div class="resumo-renda" id="resumo-renda"></div>
+    <h3>Individuais</h3>
+    <table class="table resumo-table" id="resumo-tb-ind">
+        <thead><tr><th>Descrição</th><th>Valor</th><th>Parcelas</th><th>Categoria</th></tr></thead>
+        <tbody></tbody>
+    </table>
+    <div class="resumo-subtotal" id="resumo-sub-ind"></div>
+    <h3>Compartilhados</h3>
+    <table class="table resumo-table" id="resumo-tb-comp">
+        <thead><tr><th>Descrição</th><th>Total</th><th>Sua parte</th><th>Origem</th><th>Categoria</th></tr></thead>
+        <tbody></tbody>
+    </table>
+    <div class="resumo-subtotal" id="resumo-sub-comp"></div>
+    <div class="resumo-total" id="resumo-total"></div>
+    <div class="resumo-saldo" id="resumo-saldo"></div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const now = new Date();
+    document.getElementById('selMes').value = now.getMonth() + 1;
+    const selAno = document.getElementById('selAno');
+    for (let a = 2024; a <= 2030; a++) {
+        const o = document.createElement('option');
+        o.value = a; o.text = a;
+        if (a === now.getFullYear()) o.selected = true;
+        selAno.appendChild(o);
+    }
+    document.getElementById('periodoForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const mes = document.getElementById('selMes').value;
+        const ano = document.getElementById('selAno').value;
+        carregarDashboard(mes, ano);
+        carregarResumo(mes, ano);
+    });
+    document.getElementById('selPessoa').addEventListener('change', () => {
+        const mes = document.getElementById('selMes').value;
+        const ano = document.getElementById('selAno').value;
+        carregarResumo(mes, ano);
+    });
+    carregarDashboard(now.getMonth() + 1, now.getFullYear());
+});
+async function carregarDashboard(mes, ano) {
+    const r = await fetch(`/dashboard?mes=${mes}&ano=${ano}`);
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('casa').textContent = `R$ ${d.totalGastosCasa.toFixed(2)}`;
+    document.getElementById('cartoes').textContent = `R$ ${d.totalCartoes.toFixed(2)}`;
+    document.getElementById('salarios').textContent = `R$ ${d.totalSalarios.toFixed(2)}`;
+    document.getElementById('saldo').textContent = `R$ ${d.saldo.toFixed(2)}`;
+    document.getElementById('saldo').style.color = d.saldo >= 0 ? '#28a745' : '#dc3545';
+    const catBody = document.querySelector('#catTable tbody');
+    catBody.innerHTML = d.porCategoria.map(c =>
+        `<tr><td>${c.nome}</td><td>R$ ${(c.gastosCasa||0).toFixed(2)}</td><td>R$ ${(c.cartoes||0).toFixed(2)}</td><td>R$ ${c.total.toFixed(2)}</td><td>${c.percentual}%</td></tr>`
+    ).join('');
+    const divBody = document.querySelector('#divTable tbody');
+    divBody.innerHTML = d.divisao.map(m =>
+        `<tr><td>${m.nome}</td><td>R$ ${m.salario.toFixed(2)}</td><td>${m.percentual}%</td><td>R$ ${(m.gastosCasa||0).toFixed(2)}</td><td>R$ ${(m.cartoes||0).toFixed(2)}</td><td>R$ ${m.valorPagar.toFixed(2)}</td></tr>`
+    ).join('');
+}
+async function carregarResumo(mes, ano) {
+    const pessoa = document.getElementById('selPessoa').value;
+    const div = document.getElementById('resumo-individual');
+    if (!pessoa) { div.style.display = 'none'; return; }
+    const r = await fetch(`/dashboard/resumo?pessoa=${pessoa}&mes=${mes}&ano=${ano}`);
+    if (!r.ok) { div.style.display = 'none'; return; }
+    const d = await r.json();
+    document.getElementById('resumo-titulo').textContent = `Resumo de ${d.pessoa} — ${d.mes.toString().padStart(2,'0')}/${d.ano}`;
+    document.getElementById('resumo-renda').innerHTML = `Renda: <strong>R$ ${d.salario.toFixed(2)}</strong>`;
+    if (d.individuais.length === 0) {
+        document.getElementById('resumo-tb-ind').querySelector('tbody').innerHTML = '<tr><td colspan="4" style="color:#9a9898">Nenhum gasto individual neste mês</td></tr>';
+    } else {
+        document.getElementById('resumo-tb-ind').querySelector('tbody').innerHTML = d.individuais.map(i =>
+            `<tr><td>${i.descricao}</td><td>R$ ${i.valor.toFixed(2)}</td><td>${i.parcelas}</td><td>${i.categoria}</td></tr>`
+        ).join('');
+    }
+    document.getElementById('resumo-sub-ind').textContent = `Subtotal individuais: R$ ${d.totalIndividual.toFixed(2)}`;
+    if (d.compartilhados.length === 0) {
+        document.getElementById('resumo-tb-comp').querySelector('tbody').innerHTML = '<tr><td colspan="5" style="color:#9a9898">Nenhum gasto compartilhado neste mês</td></tr>';
+    } else {
+        document.getElementById('resumo-tb-comp').querySelector('tbody').innerHTML = d.compartilhados.map(c => {
+            const badge = c.origem === 'Ambos' ? 'Ambos 50%' : c.origem === 'Casal' ? `Casal ${c.chave}` : `Casa ${c.chave}`;
+            return `<tr><td>${c.descricao}</td><td>R$ ${c.valorTotal.toFixed(2)}</td><td>R$ ${c.suaParte.toFixed(2)}</td><td><span class="resumo-origem-badge">${badge}</span></td><td>${c.categoria}</td></tr>`;
+        }).join('');
+    }
+    document.getElementById('resumo-sub-comp').textContent = `Subtotal compartilhados: R$ ${d.totalCompartilhado.toFixed(2)}`;
+    document.getElementById('resumo-total').innerHTML = `Total a pagar: R$ ${d.totalGeral.toFixed(2)}`;
+    const saldoEl = document.getElementById('resumo-saldo');
+    const saldoClass = d.saldo >= 0 ? 'resumo-saldo-positivo' : 'resumo-saldo-negativo';
+    saldoEl.innerHTML = `Saldo: ${d.saldo >= 0 ? '+' : ''}R$ ${d.saldo.toFixed(2)}`;
+    saldoEl.className = `resumo-saldo ${saldoClass}`;
+    div.style.display = 'block';
+}
+</script>
+{% endblock %}

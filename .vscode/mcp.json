@@ -1,0 +1,16 @@
+{
+  "servers": {
+    "mcp-graph": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "-p", "@mcp-graph-workflow/mcp-graph", "mcp-graph-stdio"]
+    }
+  },
+  "mcpServers": {
+    "mcp-graph": {
+      "command": "npx",
+      "args": ["-y", "-p", "@mcp-graph-workflow/mcp-graph", "mcp-graph-stdio"],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Salários{% endblock %}
+{% block content %}
+<h1>Salários</h1>
+<form class="inline-form" id="salForm">
+    <select id="salNome" required><option value="Gabriel">Gabriel</option><option value="Helena">Helena</option></select>
+    <input type="number" step="0.01" id="salValor" placeholder="Valor" required>
+    <select id="salMes"></select>
+    <select id="salAno"></select>
+    <button type="submit">Adicionar</button>
+</form>
+<table class="table" id="salTable">
+    <thead><tr><th>Membro</th><th>Valor</th><th>Mês</th><th>Ações</th></tr></thead>
+    <tbody></tbody>
+</table>
+<script>
+const meses = [...Array(12).keys()].map(i => i+1);
+const selMes = document.getElementById('salMes');
+meses.forEach(m => { const o=document.createElement('option'); o.value=m; o.text=m.toString().padStart(2,'0'); selMes.appendChild(o); });
+const selAno = document.getElementById('salAno');
+for (let a = 2024; a <= 2030; a++) { const o=document.createElement('option'); o.value=a; o.text=a; selAno.appendChild(o); }
+const now = new Date();
+selMes.value = now.getMonth() + 1;
+selAno.value = now.getFullYear();
+
+async function carregar() {
+    const r = await fetch('/salarios');
+    const dados = await r.json();
+    const tbody = document.querySelector('#salTable tbody');
+    tbody.innerHTML = dados.map(s => `
+        <tr>
+            <td>${s.nome||''}</td>
+            <td>R$ ${(s.valor||0).toFixed(2)}</td>
+            <td>${s.mes||''}/${s.ano||''}</td>
+            <td><button onclick="deletar('${s.id}')">Excluir</button></td>
+        </tr>
+    `).join('');
+}
+document.getElementById('salForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = {
+        nome: document.getElementById('salNome').value,
+        valor: parseFloat(document.getElementById('salValor').value),
+        mes: parseInt(document.getElementById('salMes').value),
+        ano: parseInt(document.getElementById('salAno').value),
+    };
+    if (!body.nome || !body.valor) return;
+    await fetch('/salarios', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    document.getElementById('salValor').value = '';
+    carregar();
+});
+async function deletar(id) {
+    if (!confirm('Excluir salário?')) return;
+    await fetch(`/salarios/${id}/delete`, { method:'POST' });
+    carregar();
+}
+carregar();
+</script>
+{% endblock %}

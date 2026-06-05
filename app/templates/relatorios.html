@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Relatórios{% endblock %}
+{% block content %}
+<h1>Relatório por Categoria</h1>
+<form class="periodo-form" id="relForm">
+    <label>Período:
+        <input type="month" id="relPeriodo" required>
+    </label>
+    <button type="submit">Filtrar</button>
+</form>
+<div id="relContent">
+    <table class="table" id="relTable">
+        <thead><tr><th>Categoria</th><th>Gastos Casa</th><th>Cartões</th><th>Total</th><th>%</th></tr></thead>
+        <tbody></tbody>
+    </table>
+</div>
+<script>
+const now = new Date();
+document.getElementById('relPeriodo').value = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}`;
+document.getElementById('relForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const periodo = document.getElementById('relPeriodo').value;
+    const [ano, mes] = periodo.split('-');
+    const r = await fetch(`/relatorios/categoria?mes=${parseInt(mes)}&ano=${ano}`);
+    if (!r.ok) return;
+    const dados = await r.json();
+    const tbody = document.querySelector('#relTable tbody');
+    if (!dados.length) { tbody.innerHTML = '<tr><td colspan="5">Nenhum gasto encontrado</td></tr>'; return; }
+    tbody.innerHTML = dados.map(c => `
+        <tr>
+            <td>${c.nome}</td>
+            <td>R$ ${(c.gastosCasa||0).toFixed(2)}</td>
+            <td>R$ ${(c.cartoes||0).toFixed(2)}</td>
+            <td>R$ ${c.total.toFixed(2)}</td>
+            <td>${c.percentual}%</td>
+        </tr>
+    `).join('');
+});
+document.getElementById('relForm').dispatchEvent(new Event('submit'));
+</script>
+{% endblock %}

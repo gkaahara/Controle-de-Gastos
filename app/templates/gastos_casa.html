@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Gastos da Casa{% endblock %}
+{% block content %}
+<h1>Gastos da Casa</h1>
+<form class="inline-form" id="gcForm">
+    <input type="text" id="gcDesc" placeholder="Descrição" required>
+    <input type="number" step="0.01" id="gcValor" placeholder="Valor" required>
+    <select id="gcCat" required><option value="">Categoria</option></select>
+    <input type="text" id="gcMembro" placeholder="Membro" required>
+    <input type="date" id="gcData" required>
+    <button type="submit">Adicionar</button>
+</form>
+<table class="table" id="gcTable">
+    <thead><tr><th>Descrição</th><th>Valor</th><th>Categoria</th><th>Membro</th><th>Data</th><th>Ações</th></tr></thead>
+    <tbody></tbody>
+</table>
+<script>
+document.getElementById('gcData').valueAsDate = new Date();
+async function carregarCategorias() {
+    const r = await fetch('/categorias');
+    const cats = await r.json();
+    const sel = document.getElementById('gcCat');
+    sel.innerHTML = '<option value="">Categoria</option>' + cats.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+}
+async function carregar() {
+    const r = await fetch('/gastos-casa');
+    const dados = await r.json();
+    const cats = await (await fetch('/categorias')).json();
+    const catMap = Object.fromEntries(cats.map(c => [c.id, c.nome]));
+    const tbody = document.querySelector('#gcTable tbody');
+    tbody.innerHTML = dados.map(g => `
+        <tr>
+            <td>${g.descricao||''}</td>
+            <td>R$ ${(g.valor||0).toFixed(2)}</td>
+            <td>${catMap[g.categoriaId]||''}</td>
+            <td>${g.membro||''}</td>
+            <td>${g.data||''}</td>
+            <td><button onclick="deletar('${g.id}')">Excluir</button></td>
+        </tr>
+    `).join('');
+}
+document.getElementById('gcForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = {
+        descricao: document.getElementById('gcDesc').value.trim(),
+        valor: parseFloat(document.getElementById('gcValor').value),
+        categoriaId: document.getElementById('gcCat').value,
+        membro: document.getElementById('gcMembro').value.trim(),
+        data: document.getElementById('gcData').value,
+    };
+    if (!body.descricao || !body.valor || !body.categoriaId || !body.membro) return;
+    await fetch('/gastos-casa', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    document.getElementById('gcDesc').value = '';
+    document.getElementById('gcValor').value = '';
+    carregar();
+});
+async function deletar(id) {
+    if (!confirm('Excluir gasto?')) return;
+    await fetch(`/gastos-casa/${id}/delete`, { method:'POST' });
+    carregar();
+}
+carregarCategorias();
+carregar();
+</script>
+{% endblock %}

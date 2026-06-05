@@ -1,0 +1,56 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; color: #e0e0e0; background: #212121; }
+.container { max-width: 960px; margin: 0 auto; padding: 1rem; }
+
+.nav-bar { background: #252525; color: #e0e0e0; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; border-bottom: 1px solid #4b4c5c; }
+.nav-brand { color: #fab283; text-decoration: none; font-weight: 700; font-size: 1.1rem; }
+.nav-links { display: flex; gap: 1rem; flex-wrap: wrap; }
+.nav-links a { color: #9a9898; text-decoration: none; font-size: 0.9rem; }
+.nav-links a:hover { color: #fab283; }
+
+h1 { margin: 1.5rem 0 1rem; font-size: 1.4rem; color: #e0e0e0; }
+h2 { margin: 1rem 0 0.5rem; font-size: 1.1rem; color: #e0e0e0; }
+
+.inline-form, .periodo-form { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+.inline-form input, .inline-form select, .periodo-form input, .periodo-form select { padding: 0.4rem 0.6rem; border: 1px solid #4b4c5c; border-radius: 4px; font-size: 0.9rem; background: #303030; color: #e0e0e0; }
+.inline-form input:focus, .inline-form select:focus, .periodo-form input:focus, .periodo-form select:focus { outline: none; border-color: #fab283; }
+.inline-form button, .periodo-form button { padding: 0.4rem 1rem; background: #fab283; color: #212121; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+.inline-form button:hover, .periodo-form button:hover { background: #f5a742; }
+
+.table { width: 100%; border-collapse: collapse; background: #252525; border-radius: 6px; overflow: hidden; margin-bottom: 1.5rem; border: 1px solid #4b4c5c; }
+.table th, .table td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid #4b4c5c; font-size: 0.9rem; }
+.table th { background: #303030; font-weight: 600; color: #9a9898; }
+.table td button { padding: 0.25rem 0.6rem; background: #e06c75; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem; }
+.table td button:hover { background: #c05a62; }
+.table td button.btn-editar { background: #61afef; }
+.table td button.btn-editar:hover { background: #4a9ad9; }
+.table td button.btn-salvar { background: #98c379; }
+.table td button.btn-salvar:hover { background: #7dab5e; }
+.table td button:disabled { opacity: 0.6; cursor: not-allowed; }
+.edit-input { width: 100%; background: #333; color: #e0e0e0; border: 1px solid #61afef; border-radius: 3px; padding: 2px 4px; font-size: inherit; font-family: inherit; box-sizing: border-box; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.card { background: #252525; border-radius: 8px; padding: 1.2rem; border: 1px solid #4b4c5c; text-align: center; }
+.card h3 { font-size: 0.85rem; color: #9a9898; margin-bottom: 0.4rem; }
+.card-valor { font-size: 1.5rem; font-weight: 700; color: #e0e0e0; }
+
+.dash-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 600px) { .dash-grid { grid-template-columns: 1fr; } }
+
+.color-badge { display: inline-block; width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; border: 1px solid #4b4c5c; }
+.inline-form label { display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; white-space: nowrap; color: #9a9898; }
+
+#relContent .table { max-width: 500px; }
+
+#resumo-individual { margin-top: 1.5rem; padding: 1rem; background: #252525; border-radius: 8px; border: 1px solid #4b4c5c; }
+#resumo-individual h2 { margin-top: 0; margin-bottom: 0.5rem; color: #fab283; font-size: 1.2rem; }
+#resumo-individual h3 { margin: 1rem 0 0.4rem; font-size: 0.95rem; color: #e0e0e0; }
+.resumo-renda { font-size: 1.1rem; font-weight: 600; color: #98c379; margin-bottom: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid #4b4c5c; }
+.resumo-table { margin-bottom: 0.3rem; }
+.resumo-subtotal { text-align: right; font-size: 0.9rem; font-weight: 600; padding: 0.3rem 0.8rem; color: #e0e0e0; }
+.resumo-total { text-align: right; font-size: 1.1rem; font-weight: 700; padding: 0.5rem 0.8rem; border-top: 2px solid #4b4c5c; margin-top: 0.5rem; color: #e0e0e0; }
+.resumo-saldo { text-align: right; font-size: 1.1rem; font-weight: 700; padding: 0.3rem 0.8rem; }
+.resumo-saldo-positivo { color: #28a745; }
+.resumo-saldo-negativo { color: #dc3545; }
+.resumo-origem-badge { display: inline-block; font-size: 0.75rem; padding: 1px 6px; border-radius: 8px; background: #303030; color: #9a9898; }
