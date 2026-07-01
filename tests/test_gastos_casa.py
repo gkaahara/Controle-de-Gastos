@@ -50,7 +50,7 @@ class TestGastosCasaRoutes:
             "descricao": "Old", "valor": 100,
             "categoriaId": "cat1", "data": "2026-06-01", "membroId": "mem1"
         }).get_json()
-        resp = client.post(f"/gastos-casa/{created['id']}/update", json={"valor": 150})
+        resp = client.put(f"/gastos-casa/{created['id']}", json={"valor": 150})
         assert resp.status_code == 200
         assert resp.get_json()["valor"] == 150.0
 
@@ -59,7 +59,8 @@ class TestGastosCasaRoutes:
             "descricao": "Delete", "valor": 50,
             "categoriaId": "cat1", "data": "2026-06-01", "membroId": "mem1"
         }).get_json()
-        assert client.post(f"/gastos-casa/{created['id']}/delete").status_code == 200
+        resp = client.delete(f"/gastos-casa/{created['id']}")
+        assert resp.status_code == 200
         assert client.get(f"/gastos-casa/{created['id']}").status_code == 404
 
     def test_filter_by_mes(self, client):

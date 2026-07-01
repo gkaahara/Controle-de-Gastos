@@ -44,6 +44,57 @@ pyinstaller projeto-gastos.spec --clean --noconfirm
 
 O executável será gerado em `dist/projeto-gastos.exe`.
 
+## Configuration
+
+### Environment Variables
+
+Configuration is validated on startup using Pydantic schema validation. All environment variables are optional with sensible defaults for development.
+
+| Variable | Default | Production Rule | Description |
+|----------|---------|-----------------|-------------|
+| `ENVIRONMENT` | `development` | Recommended: `production` | Deployment environment |
+| `SECRET_KEY` | `dev-secret-key` | **Required**: Must NOT be `dev-secret-key` | Flask session secret key |
+| `DEBUG` | `true` | **Required**: Must be `false` | Flask debug mode |
+
+### Validation Rules
+
+- **Production Environment**: 
+  - `SECRET_KEY` must be changed from the default `dev-secret-key` to a secure random string
+  - `DEBUG` must be set to `false`
+  - If validation fails, app startup will raise `ConfigError` with detailed message
+
+- **Development Environment**:
+  - `SECRET_KEY` can use the default `dev-secret-key`
+  - `DEBUG` can be `true` for automatic reloading and error pages
+
+### Example: Running in Production
+
+```bash
+# Set environment variables before running
+set ENVIRONMENT=production
+set SECRET_KEY=your-secure-random-key-here-min-32-chars
+set DEBUG=false
+
+python app.py
+```
+
+Or in `.env` file (if using `python-dotenv`):
+```
+ENVIRONMENT=production
+SECRET_KEY=your-secure-random-key-here-min-32-chars
+DEBUG=false
+```
+
+### Validation on Startup
+
+The `config.py` module validates all configuration on import. If validation fails:
+
+```
+RuntimeError: Configuration error: Configuration validation failed: SECRET_KEY cannot be "dev-secret-key" in production
+```
+
+This ensures security constraints are enforced before the app starts.
+
 ## Testes
 
 ```bat

@@ -1,65 +1,74 @@
-import os
-from flask import Blueprint, jsonify, request, current_app
-from app.json_store import JsonStore
-
+from flask import Blueprint, jsonify, request
+from app.store_factory import get_store
+from app.constants import (
+    FIELD_DESCRICAO,
+    FIELD_VALOR,
+    FIELD_CATEGORIA_ID,
+    FIELD_DATA,
+    FIELD_MES,
+    FIELD_ANO,
+    ERROR_NOT_FOUND,
+    ERROR_DESCRICAO_VALOR_REQUIRED,
+    RESPONSE_ERROR,
+    RESPONSE_SUCCESS,
+    FILE_GASTOS_CASA,
+    HTTP_OK,
+    HTTP_CREATED,
+    HTTP_BAD_REQUEST,
+    HTTP_NOT_FOUND,
+)
 
 gastos_casa_bp = Blueprint("gastos_casa", __name__)
 
 
-def _get_store():
-    data_dir = current_app.config.get("DATA_DIR",
-                                      os.path.join(os.path.dirname(__file__), "..", "..", "data"))
-    return JsonStore(os.path.join(data_dir, "gastos_casa.json"))
-
-
 @gastos_casa_bp.route("/gastos-casa", methods=["GET"])
 def listar():
-    store = _get_store()
+    store = get_store(FILE_GASTOS_CASA)
     items = store.get_all()
-    mes = request.args.get("mes")
-    ano = request.args.get("ano")
+    mes = request.args.get(FIELD_MES)
+    ano = request.args.get(FIELD_ANO)
     categoria = request.args.get("categoria")
     if mes and ano:
-        items = [i for i in items if i.get("data", "").startswith(f"{ano}-{int(mes):02d}")]
+        items = [i for i in items if i.get(FIELD_DATA, "").startswith(f"{ano}-{int(mes):02d}")]
     if categoria:
-        items = [i for i in items if i.get("categoriaId") == categoria]
+        items = [i for i in items if i.get(FIELD_CATEGORIA_ID) == categoria]
     return jsonify(items)
 
 
 @gastos_casa_bp.route("/gastos-casa", methods=["POST"])
 def criar():
     data = request.get_json()
-    if not data or not data.get("descricao") or float(data.get("valor", 0)) <= 0:
-        return jsonify({"error": "descricao and positive valor required"}), 400
-    store = _get_store()
+    if not data or not data.get(FIELD_DESCRICAO) or float(data.get(FIELD_VALOR, 0)) <= 0:
+        return jsonify({RESPONSE_ERROR: ERROR_DESCRICAO_VALOR_REQUIRED}), HTTP_BAD_REQUEST
+    store = get_store(FILE_GASTOS_CASA)
     item = store.create(data)
-    return jsonify(item), 201
+    return jsonify(item), HTTP_CREATED
 
 
 @gastos_casa_bp.route("/gastos-casa/<id>", methods=["GET"])
 def obter(id):
-    store = _get_store()
+    store = get_store(FILE_GASTOS_CASA)
     item = store.get_by_id(id)
     if item is None:
-        return jsonify({"error": "not found"}), 404
+        return jsonify({RESPONSE_ERROR: ERROR_NOT_FOUND}), HTTP_NOT_FOUND
     return jsonify(item)
 
 
-@gastos_casa_bp.route("/gastos-casa/<id>/update", methods=["POST"])
+@gastos_casa_bp.route("/gastos-casa/<id>", methods=["PUT"])
 def atualizar(id):
-    store = _get_store()
+    store = get_store(FILE_GASTOS_CASA)
     item = store.get_by_id(id)
     if item is None:
-        return jsonify({"error": "not found"}), 404
+        return jsonify({RESPONSE_ERROR: ERROR_NOT_FOUND}), HTTP_NOT_FOUND
     updated = store.update(id, request.get_json())
-    return jsonify(updated)
+    return jsonify(updated), HTTP_OK
 
 
-@gastos_casa_bp.route("/gastos-casa/<id>/delete", methods=["POST"])
+@gastos_casa_bp.route("/gastos-casa/<id>", methods=["DELETE"])
 def deletar(id):
-    store = _get_store()
+    store = get_store(FILE_GASTOS_CASA)
     item = store.get_by_id(id)
     if item is None:
-        return jsonify({"error": "not found"}), 404
+        return jsonify({RESPONSE_ERROR: ERROR_NOT_FOUND}), HTTP_NOT_FOUND
     store.delete(id)
-    return jsonify({"success": True})
+    return jsonify({RESPONSE_SUCCESS: True}), HTTP_OK

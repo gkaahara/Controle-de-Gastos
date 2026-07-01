@@ -1,58 +1,62 @@
-import os
-from flask import Blueprint, jsonify, request, current_app
-from app.json_store import JsonStore
-
+from flask import Blueprint, jsonify, request
+from app.store_factory import get_store
+from app.constants import (
+    FIELD_NOME,
+    ERROR_NOT_FOUND,
+    ERROR_NOME_REQUIRED,
+    RESPONSE_ERROR,
+    RESPONSE_SUCCESS,
+    FILE_CATEGORIAS,
+    HTTP_OK,
+    HTTP_CREATED,
+    HTTP_BAD_REQUEST,
+    HTTP_NOT_FOUND,
+)
 
 categorias_bp = Blueprint("categorias", __name__)
 
 
-def _get_store():
-    data_dir = current_app.config.get("DATA_DIR",
-                                      os.path.join(os.path.dirname(__file__), "..", "..", "data"))
-    return JsonStore(os.path.join(data_dir, "categorias.json"))
-
-
 @categorias_bp.route("/categorias", methods=["GET"])
 def listar():
-    store = _get_store()
+    store = get_store(FILE_CATEGORIAS)
     return jsonify(store.get_all())
 
 
 @categorias_bp.route("/categorias", methods=["POST"])
 def criar():
     data = request.get_json()
-    if not data or not data.get("nome"):
-        return jsonify({"error": "nome is required"}), 400
-    store = _get_store()
+    if not data or not data.get(FIELD_NOME):
+        return jsonify({RESPONSE_ERROR: ERROR_NOME_REQUIRED}), HTTP_BAD_REQUEST
+    store = get_store(FILE_CATEGORIAS)
     item = store.create(data)
-    return jsonify(item), 201
+    return jsonify(item), HTTP_CREATED
 
 
 @categorias_bp.route("/categorias/<id>", methods=["GET"])
 def obter(id):
-    store = _get_store()
+    store = get_store(FILE_CATEGORIAS)
     item = store.get_by_id(id)
     if item is None:
-        return jsonify({"error": "not found"}), 404
+        return jsonify({RESPONSE_ERROR: ERROR_NOT_FOUND}), HTTP_NOT_FOUND
     return jsonify(item)
 
 
-@categorias_bp.route("/categorias/<id>/update", methods=["POST"])
+@categorias_bp.route("/categorias/<id>", methods=["PUT"])
 def atualizar(id):
-    store = _get_store()
+    store = get_store(FILE_CATEGORIAS)
     item = store.get_by_id(id)
     if item is None:
-        return jsonify({"error": "not found"}), 404
+        return jsonify({RESPONSE_ERROR: ERROR_NOT_FOUND}), HTTP_NOT_FOUND
     data = request.get_json()
     updated = store.update(id, data)
-    return jsonify(updated)
+    return jsonify(updated), HTTP_OK
 
 
-@categorias_bp.route("/categorias/<id>/delete", methods=["POST"])
+@categorias_bp.route("/categorias/<id>", methods=["DELETE"])
 def deletar(id):
-    store = _get_store()
+    store = get_store(FILE_CATEGORIAS)
     item = store.get_by_id(id)
     if item is None:
-        return jsonify({"error": "not found"}), 404
+        return jsonify({RESPONSE_ERROR: ERROR_NOT_FOUND}), HTTP_NOT_FOUND
     store.delete(id)
-    return jsonify({"success": True})
+    return jsonify({RESPONSE_SUCCESS: True}), HTTP_OK

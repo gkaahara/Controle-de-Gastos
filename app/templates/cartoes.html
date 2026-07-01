@@ -43,7 +43,7 @@ document.getElementById('importVencto').valueAsDate = new Date();
 async function carregarCategorias() {
   const r = await fetch('/categorias');
   const cats = await r.json();
-  const html = '<option value="">Categoria</option>' + cats.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+  const html = '<option value="">Categoria</option>' + cats.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join('');
   document.getElementById('cartCat').innerHTML = html;
   document.getElementById('importCat').innerHTML = html;
 }
@@ -54,18 +54,25 @@ async function carregar() {
   const catMap = Object.fromEntries(cats.map(c => [c.id, c.nome]));
   const tbody = document.querySelector('#cartTable tbody');
   tbody.innerHTML = dados.map(c => `
-    <tr data-id="${c.id}">
-      <td class="desc-cell">${c.descricao||''}</td>
+    <tr data-id="${esc(c.id)}">
+      <td class="desc-cell">${esc(c.descricao||'')}</td>
       <td>R$ ${(c.valor||0).toFixed(2)}</td>
-      <td>${catMap[c.categoriaId]||''}</td>
-      <td>${c.bandeira||''}</td>
-      <td>${c.responsavel||'Casal'}</td>
+      <td>${esc(catMap[c.categoriaId]||'')}</td>
+      <td>${esc(c.bandeira||'')}</td>
+      <td>${esc(c.responsavel||'Casal')}</td>
       <td>${c.parcelaAtual||1}/${c.totalParcelas||1}</td>
-      <td>${c.vencimento||''}</td>
-      <td class="acoes-cell"><button onclick="deletar('${c.id}')">Excluir</button> <button onclick="editar(this)" class="btn-editar">Editar</button></td>
+      <td>${esc(c.vencimento||'')}</td>
+      <td class="acoes-cell"><button data-id="${esc(c.id)}" class="btn-excluir-cart">Excluir</button> <button class="btn-editar" data-id="${esc(c.id)}">Editar</button></td>
     </tr>
   `).join('');
 }
+document.querySelector('#cartTable tbody').addEventListener('click', e => {
+    if (e.target.classList.contains('btn-excluir-cart')) {
+        deletar(e.target.dataset.id);
+    } else if (e.target.classList.contains('btn-editar')) {
+        editar(e.target);
+    }
+});
 document.getElementById('cartForm').addEventListener('submit', async e => {
   e.preventDefault();
   const totalParcelas = parseInt(document.getElementById('cartParcelas').value);
@@ -88,7 +95,7 @@ document.getElementById('cartForm').addEventListener('submit', async e => {
 });
 async function deletar(id) {
   if (!confirm('Excluir gasto de cartão?')) return;
-  await fetch(`/cartoes/${id}/delete`, { method:'POST' });
+  await fetch(`/cartoes/${id}`, { method:'DELETE' });
   carregar();
 }
 function editar(btn) {
@@ -120,8 +127,8 @@ async function salvar(btn) {
   btn.disabled = true;
   btn.textContent = 'Salvando...';
   try {
-    const r = await fetch(`/cartoes/${id}/update`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
+    const r = await fetch(`/cartoes/${id}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ descricao: novo })
     });
     if (!r.ok) throw new Error(await r.text());
@@ -156,8 +163,8 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
   const tbody = document.getElementById('previewBody');
   tbody.innerHTML = itens.map((item, i) => `
     <tr>
-      <td>${item.dataCompra||''}</td>
-      <td>${item.descricao}</td>
+      <td>${esc(item.dataCompra||'')}</td>
+      <td>${esc(item.descricao)}</td>
       <td>R$ ${item.valor.toFixed(2)}</td>
       <td>${item.parcelaAtual||1}/${item.totalParcelas||1}</td>
       <td>

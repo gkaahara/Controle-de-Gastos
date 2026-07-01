@@ -14,10 +14,8 @@ DEFAULT_CATEGORIES = [
 
 
 def seed_default_categories(app):
-    from app.json_store import JsonStore
-    data_dir = app.config.get("DATA_DIR",
-                              os.path.join(os.path.dirname(__file__), "..", "data"))
-    store = JsonStore(os.path.join(data_dir, "categorias.json"))
+    from app.store_factory import get_store
+    store = get_store("categorias.json")
     existing = store.get_all()
     if existing:
         return

@@ -1,38 +1,42 @@
-import math
-import os
-from flask import Blueprint, jsonify, request, current_app
-from app.json_store import JsonStore
-
+from decimal import Decimal, ROUND_DOWN
+from flask import Blueprint, jsonify, request
+from app.store_factory import get_store
+from app.constants import (
+    FIELD_DATA,
+    FIELD_MES,
+    FIELD_ANO,
+    ERROR_MES_ANO_REQUIRED,
+    RESPONSE_ERROR,
+    FILE_GASTOS_CASA,
+    FILE_CATEGORIAS,
+    FILE_CARTOES,
+    FILE_SALARIOS,
+    HTTP_BAD_REQUEST,
+)
 
 relatorios_bp = Blueprint("relatorios", __name__)
 
 
-def _get_store(name):
-    data_dir = current_app.config.get("DATA_DIR",
-                                      os.path.join(os.path.dirname(__file__), "..", "..", "data"))
-    return JsonStore(os.path.join(data_dir, name))
-
-
 def _prefix_filter(entries, ano, mes):
     prefix = f"{ano}-{int(mes):02d}"
-    return [e for e in entries if e.get("data", "").startswith(prefix)]
+    return [e for e in entries if e.get(FIELD_DATA, "").startswith(prefix)]
 
 
 @relatorios_bp.route("/relatorios/categoria", methods=["GET"])
 def relatorio_categoria():
-    mes = request.args.get("mes")
-    ano = request.args.get("ano")
+    mes = request.args.get(FIELD_MES)
+    ano = request.args.get(FIELD_ANO)
     if not mes or not ano:
-        return jsonify({"error": "mes and ano required"}), 400
+        return jsonify({RESPONSE_ERROR: ERROR_MES_ANO_REQUIRED}), HTTP_BAD_REQUEST
 
-    store = _get_store("gastos_casa.json")
+    store = get_store(FILE_GASTOS_CASA)
     gastos = store.get_all()
     filtrados = _prefix_filter(gastos, ano, mes)
 
-    categorias = _get_store("categorias.json").get_all()
+    categorias = get_store(FILE_CATEGORIAS).get_all()
     cat_map = {c.get("id", ""): c.get("nome", "unknown") for c in categorias}
 
-    cartoes_raw = _get_store("cartoes.json").get_all()
+    cartoes_raw = get_store(FILE_CARTOES).get_all()
     cartoes_mes = [c for c in cartoes_raw if c.get("vencimento", "").startswith(f"{ano}-{int(mes):02d}")]
 
     cat_agg = {}
@@ -67,19 +71,19 @@ def relatorio_categoria():
 
 @relatorios_bp.route("/relatorios/divisao", methods=["GET"])
 def divisao_proporcional():
-    mes = request.args.get("mes")
-    ano = request.args.get("ano")
+    mes = request.args.get(FIELD_MES)
+    ano = request.args.get(FIELD_ANO)
     if not mes or not ano:
-        return jsonify({"error": "mes and ano required"}), 400
+        return jsonify({RESPONSE_ERROR: ERROR_MES_ANO_REQUIRED}), HTTP_BAD_REQUEST
 
-    salarios_store = _get_store("salarios.json")
+    salarios_store = get_store(FILE_SALARIOS)
     salarios = salarios_store.get_all()
-    membros_mes = [s for s in salarios if s.get("mes") == int(mes) and s.get("ano") == int(ano)]
+    membros_mes = [s for s in salarios if s.get(FIELD_MES) == int(mes) and s.get(FIELD_ANO) == int(ano)]
     if not membros_mes:
-        return jsonify({"error": "no salaries found for period"}), 400
+        return jsonify({RESPONSE_ERROR: "no salaries found for period"}), HTTP_BAD_REQUEST
 
-    gastos = _prefix_filter(_get_store("gastos_casa.json").get_all(), ano, mes)
-    cartoes_raw = _get_store("cartoes.json").get_all()
+    gastos = _prefix_filter(get_store(FILE_GASTOS_CASA).get_all(), ano, mes)
+    cartoes_raw = get_store(FILE_CARTOES).get_all()
     cartoes = [c for c in cartoes_raw if c.get("vencimento", "").startswith(f"{ano}-{int(mes):02d}")]
 
     total_gastos = round(sum(g["valor"] for g in gastos), 2)
@@ -96,12 +100,18 @@ def divisao_proporcional():
         return jsonify([])
 
     if not membros_mes:
-        return jsonify({"error": "no salaries found for period"}), 400
+        return jsonify({RESPONSE_ERROR: "no salaries found for period"}), HTTP_BAD_REQUEST
 
     soma_salarios = sum(s["valor"] for s in membros_mes)
+    d_soma = Decimal(str(soma_salarios))
+    d_total_prop = Decimal(str(total_proporcional))
     resultado = []
     for s in membros_mes:
-        valor_proporcional = math.floor(total_proporcional * s["valor"] / soma_salarios * 100) / 100 if total_proporcional > 0 else 0
+        if total_proporcional > 0:
+            d_salario = Decimal(str(s["valor"]))
+            valor_proporcional = float((d_total_prop * d_salario / d_soma).quantize(Decimal('0.01'), rounding=ROUND_DOWN))
+        else:
+            valor_proporcional = 0
         extras = {"Gabriel": total_individual_gabriel, "Helena": total_individual_helena}
         valor_pagar = round(valor_proporcional + extras.get(s.get("nome", ""), 0), 2)
         resultado.append({

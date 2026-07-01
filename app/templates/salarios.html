@@ -29,10 +29,10 @@ async function carregar() {
     const tbody = document.querySelector('#salTable tbody');
     tbody.innerHTML = dados.map(s => `
         <tr>
-            <td>${s.nome||''}</td>
+            <td>${esc(s.nome||'')}</td>
             <td>R$ ${(s.valor||0).toFixed(2)}</td>
-            <td>${s.mes||''}/${s.ano||''}</td>
-            <td><button onclick="deletar('${s.id}')">Excluir</button></td>
+            <td>${esc(s.mes||'')}/${esc(s.ano||'')}</td>
+            <td><button data-id="${esc(s.id)}" class="btn-excluir-sal">Excluir</button></td>
         </tr>
     `).join('');
 }
@@ -49,11 +49,13 @@ document.getElementById('salForm').addEventListener('submit', async e => {
     document.getElementById('salValor').value = '';
     carregar();
 });
-async function deletar(id) {
+document.querySelector('#salTable tbody').addEventListener('click', async e => {
+    if (!e.target.classList.contains('btn-excluir-sal')) return;
+    const id = e.target.dataset.id;
     if (!confirm('Excluir salário?')) return;
-    await fetch(`/salarios/${id}/delete`, { method:'POST' });
+    await fetch(`/salarios/${id}`, { method:'DELETE' });
     carregar();
-}
+});
 carregar();
 </script>
 {% endblock %}
