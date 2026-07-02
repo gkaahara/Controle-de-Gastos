@@ -50,7 +50,8 @@ class TestCartoesRoutes:
             "parcela": 1, "totalParcelas": 1,
             "bandeira": "Visa", "vencimento": "2026-07-01"
         }).get_json()
-        resp = client.post(f"/cartoes/{created['id']}/update", json={"valor": 25.90})
+        resp = client.put(f"/cartoes/{created['id']}", json={"valor": 25.90})
+        assert resp.status_code == 200
         assert resp.get_json()["valor"] == 25.90
 
     def test_create_with_responsavel(self, client):
@@ -80,8 +81,10 @@ class TestCartoesRoutes:
             "parcela": 1, "totalParcelas": 1,
             "bandeira": "Visa", "vencimento": "2026-07-01"
         }).get_json()
-        assert client.post(f"/cartoes/{created['id']}/delete").status_code == 200
+        resp = client.delete(f"/cartoes/{created['id']}")
+        assert resp.status_code == 200
         assert client.get(f"/cartoes/{created['id']}").status_code == 404
+
 
 
 class TestImportFatura:

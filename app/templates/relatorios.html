@@ -28,7 +28,7 @@ document.getElementById('relForm').addEventListener('submit', async e => {
     if (!dados.length) { tbody.innerHTML = '<tr><td colspan="5">Nenhum gasto encontrado</td></tr>'; return; }
     tbody.innerHTML = dados.map(c => `
         <tr>
-            <td>${c.nome}</td>
+            <td>${esc(c.nome)}</td>
             <td>R$ ${(c.gastosCasa||0).toFixed(2)}</td>
             <td>R$ ${(c.cartoes||0).toFixed(2)}</td>
             <td>R$ ${c.total.toFixed(2)}</td>

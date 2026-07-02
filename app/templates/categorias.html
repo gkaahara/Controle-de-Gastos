@@ -18,10 +18,10 @@ async function carregar() {
     const tbody = document.querySelector('#catTable tbody');
     tbody.innerHTML = dados.map(c => `
         <tr>
-            <td><span class="color-badge" style="background:${c.cor||'#ccc'}"></span></td>
-            <td>${c.nome}</td>
+            <td><span class="color-badge" style="background:${esc(c.cor||'#ccc')}"></span></td>
+            <td>${esc(c.nome)}</td>
             <td>
-                <button onclick="deletar('${c.id}')">Excluir</button>
+                <button data-id="${esc(c.id)}" class="btn-excluir-cat">Excluir</button>
             </td>
         </tr>
     `).join('');
@@ -35,11 +35,13 @@ document.getElementById('catForm').addEventListener('submit', async e => {
     document.getElementById('catNome').value = '';
     carregar();
 });
-async function deletar(id) {
+document.querySelector('#catTable tbody').addEventListener('click', async e => {
+    if (!e.target.classList.contains('btn-excluir-cat')) return;
+    const id = e.target.dataset.id;
     if (!confirm('Excluir categoria?')) return;
-    await fetch(`/categorias/${id}/delete`, { method:'POST' });
+    await fetch(`/categorias/${id}`, { method:'DELETE' });
     carregar();
-}
+});
 carregar();
 </script>
 {% endblock %}

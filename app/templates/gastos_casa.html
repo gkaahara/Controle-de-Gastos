@@ -20,7 +20,7 @@ async function carregarCategorias() {
     const r = await fetch('/categorias');
     const cats = await r.json();
     const sel = document.getElementById('gcCat');
-    sel.innerHTML = '<option value="">Categoria</option>' + cats.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+    sel.innerHTML = '<option value="">Categoria</option>' + cats.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join('');
 }
 async function carregar() {
     const r = await fetch('/gastos-casa');
@@ -30,12 +30,12 @@ async function carregar() {
     const tbody = document.querySelector('#gcTable tbody');
     tbody.innerHTML = dados.map(g => `
         <tr>
-            <td>${g.descricao||''}</td>
+            <td>${esc(g.descricao||'')}</td>
             <td>R$ ${(g.valor||0).toFixed(2)}</td>
-            <td>${catMap[g.categoriaId]||''}</td>
-            <td>${g.membro||''}</td>
-            <td>${g.data||''}</td>
-            <td><button onclick="deletar('${g.id}')">Excluir</button></td>
+            <td>${esc(catMap[g.categoriaId]||'')}</td>
+            <td>${esc(g.membro||'')}</td>
+            <td>${esc(g.data||'')}</td>
+            <td><button data-id="${esc(g.id)}" class="btn-excluir-gc">Excluir</button></td>
         </tr>
     `).join('');
 }
@@ -54,11 +54,13 @@ document.getElementById('gcForm').addEventListener('submit', async e => {
     document.getElementById('gcValor').value = '';
     carregar();
 });
-async function deletar(id) {
+document.querySelector('#gcTable tbody').addEventListener('click', async e => {
+    if (!e.target.classList.contains('btn-excluir-gc')) return;
+    const id = e.target.dataset.id;
     if (!confirm('Excluir gasto?')) return;
-    await fetch(`/gastos-casa/${id}/delete`, { method:'POST' });
+    await fetch(`/gastos-casa/${id}`, { method:'DELETE' });
     carregar();
-}
+});
 carregarCategorias();
 carregar();
 </script>

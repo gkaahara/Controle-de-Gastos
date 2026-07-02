@@ -1,35 +1,39 @@
-import math
-import os
-from flask import Blueprint, jsonify, request, current_app
-from app.json_store import JsonStore
-
+from decimal import Decimal, ROUND_DOWN
+from flask import Blueprint, jsonify, request
+from app.store_factory import get_store
+from app.constants import (
+    FIELD_DATA,
+    FIELD_MES,
+    FIELD_ANO,
+    ERROR_MES_ANO_REQUIRED,
+    RESPONSE_ERROR,
+    FILE_GASTOS_CASA,
+    FILE_CARTOES,
+    FILE_SALARIOS,
+    FILE_CATEGORIAS,
+    HTTP_BAD_REQUEST,
+)
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
-def _get_store(name):
-    data_dir = current_app.config.get("DATA_DIR",
-                                      os.path.join(os.path.dirname(__file__), "..", "..", "data"))
-    return JsonStore(os.path.join(data_dir, name))
-
-
 def _prefix_filter(entries, ano, mes):
     prefix = f"{ano}-{int(mes):02d}"
-    return [e for e in entries if e.get("data", "").startswith(prefix)]
+    return [e for e in entries if e.get(FIELD_DATA, "").startswith(prefix)]
 
 
 @dashboard_bp.route("/dashboard", methods=["GET"])
 def resumo():
-    mes = request.args.get("mes")
-    ano = request.args.get("ano")
+    mes = request.args.get(FIELD_MES)
+    ano = request.args.get(FIELD_ANO)
     if not mes or not ano:
-        return jsonify({"error": "mes and ano required"}), 400
+        return jsonify({RESPONSE_ERROR: ERROR_MES_ANO_REQUIRED}), HTTP_BAD_REQUEST
 
-    gastos_casa = _prefix_filter(_get_store("gastos_casa.json").get_all(), ano, mes)
-    cartoes_raw = _get_store("cartoes.json").get_all()
+    gastos_casa = _prefix_filter(get_store(FILE_GASTOS_CASA).get_all(), ano, mes)
+    cartoes_raw = get_store(FILE_CARTOES).get_all()
     cartoes = [c for c in cartoes_raw if c.get("vencimento", "").startswith(f"{ano}-{int(mes):02d}")]
-    salarios = _get_store("salarios.json").get_all()
-    categorias = _get_store("categorias.json").get_all()
+    salarios = get_store(FILE_SALARIOS).get_all()
+    categorias = get_store(FILE_CATEGORIAS).get_all()
 
     membros_mes = [s for s in salarios if s.get("mes") == int(mes) and s.get("ano") == int(ano)]
     total_gastos_casa = round(sum(g["valor"] for g in gastos_casa), 2)
@@ -81,9 +85,12 @@ def resumo():
     divisao = []
     if membros_mes and total_proporcional > 0:
         soma_salarios = sum(s["valor"] for s in membros_mes)
+        d_soma = Decimal(str(soma_salarios))
+        d_total_prop = Decimal(str(total_proporcional))
         for s in membros_mes:
             nome = s.get("nome", "")
-            valor_proporcional = math.floor(total_proporcional * s["valor"] / soma_salarios * 100) / 100
+            d_salario = Decimal(str(s["valor"]))
+            valor_proporcional = float((d_total_prop * d_salario / d_soma).quantize(Decimal('0.01'), rounding=ROUND_DOWN))
             if total_proporcional > 0:
                 gastos_casa_share = round(valor_proporcional * total_gastos_casa / total_proporcional, 2)
                 cartoes_casal_share = round(valor_proporcional * total_cartoes_casal / total_proporcional, 2)
@@ -143,18 +150,18 @@ def resumo():
 @dashboard_bp.route("/dashboard/resumo", methods=["GET"])
 def resumo_morador():
     pessoa = request.args.get("pessoa", "")
-    mes = request.args.get("mes")
-    ano = request.args.get("ano")
+    mes = request.args.get(FIELD_MES)
+    ano = request.args.get(FIELD_ANO)
     if not pessoa or not mes or not ano:
-        return jsonify({"error": "pessoa, mes and ano required"}), 400
+        return jsonify({RESPONSE_ERROR: "pessoa, mes and ano required"}), HTTP_BAD_REQUEST
     if not pessoa.strip():
-        return jsonify({"error": "pessoa must be a valid name"}), 400
+        return jsonify({RESPONSE_ERROR: "pessoa must be a valid name"}), HTTP_BAD_REQUEST
 
-    gastos_casa = _prefix_filter(_get_store("gastos_casa.json").get_all(), ano, mes)
-    cartoes_raw = _get_store("cartoes.json").get_all()
+    gastos_casa = _prefix_filter(get_store(FILE_GASTOS_CASA).get_all(), ano, mes)
+    cartoes_raw = get_store(FILE_CARTOES).get_all()
     cartoes = [c for c in cartoes_raw if c.get("vencimento", "").startswith(f"{ano}-{int(mes):02d}")]
-    salarios = _get_store("salarios.json").get_all()
-    categorias = _get_store("categorias.json").get_all()
+    salarios = get_store(FILE_SALARIOS).get_all()
+    categorias = get_store(FILE_CATEGORIAS).get_all()
 
     membros_mes = {s.get("nome"): s for s in salarios if s.get("mes") == int(mes) and s.get("ano") == int(ano)}
     salario_pessoa = membros_mes.get(pessoa, {}).get("valor", 0)

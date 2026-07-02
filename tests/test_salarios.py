@@ -64,25 +64,25 @@ class TestSalariosRoutes:
         created = client.post("/salarios", json={
             "membroId": "mem1", "valor": 2000, "mes": 6, "ano": 2026
         }).get_json()
-        resp = client.post(f"/salarios/{created['id']}/update", json={"valor": 2500})
+        resp = client.put(f"/salarios/{created['id']}", json={"valor": 2500})
         assert resp.status_code == 200
         assert resp.get_json()["valor"] == 2500.0
 
     def test_update_salario_not_found(self, client):
-        resp = client.post("/salarios/nonexistent/update", json={"valor": 1000})
+        resp = client.put("/salarios/nonexistent", json={"valor": 1000})
         assert resp.status_code == 404
 
     def test_delete_salario(self, client):
         created = client.post("/salarios", json={
             "membroId": "mem1", "valor": 4000, "mes": 6, "ano": 2026
         }).get_json()
-        resp = client.post(f"/salarios/{created['id']}/delete")
+        resp = client.delete(f"/salarios/{created['id']}")
         assert resp.status_code == 200
         get_resp = client.get(f"/salarios/{created['id']}")
         assert get_resp.status_code == 404
 
     def test_delete_salario_not_found(self, client):
-        resp = client.post("/salarios/nonexistent/delete")
+        resp = client.delete("/salarios/nonexistent")
         assert resp.status_code == 404
 
     def test_list_filter_by_mes_ano(self, client):

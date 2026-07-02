@@ -98,11 +98,11 @@ async function carregarDashboard(mes, ano) {
     document.getElementById('saldo').style.color = d.saldo >= 0 ? '#28a745' : '#dc3545';
     const catBody = document.querySelector('#catTable tbody');
     catBody.innerHTML = d.porCategoria.map(c =>
-        `<tr><td>${c.nome}</td><td>R$ ${(c.gastosCasa||0).toFixed(2)}</td><td>R$ ${(c.cartoes||0).toFixed(2)}</td><td>R$ ${c.total.toFixed(2)}</td><td>${c.percentual}%</td></tr>`
+        `<tr><td>${esc(c.nome)}</td><td>R$ ${(c.gastosCasa||0).toFixed(2)}</td><td>R$ ${(c.cartoes||0).toFixed(2)}</td><td>R$ ${c.total.toFixed(2)}</td><td>${c.percentual}%</td></tr>`
     ).join('');
     const divBody = document.querySelector('#divTable tbody');
     divBody.innerHTML = d.divisao.map(m =>
-        `<tr><td>${m.nome}</td><td>R$ ${m.salario.toFixed(2)}</td><td>${m.percentual}%</td><td>R$ ${(m.gastosCasa||0).toFixed(2)}</td><td>R$ ${(m.cartoes||0).toFixed(2)}</td><td>R$ ${m.valorPagar.toFixed(2)}</td></tr>`
+        `<tr><td>${esc(m.nome)}</td><td>R$ ${m.salario.toFixed(2)}</td><td>${m.percentual}%</td><td>R$ ${(m.gastosCasa||0).toFixed(2)}</td><td>R$ ${(m.cartoes||0).toFixed(2)}</td><td>R$ ${m.valorPagar.toFixed(2)}</td></tr>`
     ).join('');
 }
 async function carregarResumo(mes, ano) {
@@ -118,7 +118,7 @@ async function carregarResumo(mes, ano) {
         document.getElementById('resumo-tb-ind').querySelector('tbody').innerHTML = '<tr><td colspan="4" style="color:#9a9898">Nenhum gasto individual neste mês</td></tr>';
     } else {
         document.getElementById('resumo-tb-ind').querySelector('tbody').innerHTML = d.individuais.map(i =>
-            `<tr><td>${i.descricao}</td><td>R$ ${i.valor.toFixed(2)}</td><td>${i.parcelas}</td><td>${i.categoria}</td></tr>`
+            `<tr><td>${esc(i.descricao)}</td><td>R$ ${i.valor.toFixed(2)}</td><td>${esc(i.parcelas)}</td><td>${esc(i.categoria)}</td></tr>`
         ).join('');
     }
     document.getElementById('resumo-sub-ind').textContent = `Subtotal individuais: R$ ${d.totalIndividual.toFixed(2)}`;
@@ -126,8 +126,8 @@ async function carregarResumo(mes, ano) {
         document.getElementById('resumo-tb-comp').querySelector('tbody').innerHTML = '<tr><td colspan="5" style="color:#9a9898">Nenhum gasto compartilhado neste mês</td></tr>';
     } else {
         document.getElementById('resumo-tb-comp').querySelector('tbody').innerHTML = d.compartilhados.map(c => {
-            const badge = c.origem === 'Ambos' ? 'Ambos 50%' : c.origem === 'Casal' ? `Casal ${c.chave}` : `Casa ${c.chave}`;
-            return `<tr><td>${c.descricao}</td><td>R$ ${c.valorTotal.toFixed(2)}</td><td>R$ ${c.suaParte.toFixed(2)}</td><td><span class="resumo-origem-badge">${badge}</span></td><td>${c.categoria}</td></tr>`;
+            const badge = c.origem === 'Ambos' ? 'Ambos 50%' : c.origem === 'Casal' ? `Casal ${esc(c.chave)}` : `Casa ${esc(c.chave)}`;
+            return `<tr><td>${esc(c.descricao)}</td><td>R$ ${c.valorTotal.toFixed(2)}</td><td>R$ ${c.suaParte.toFixed(2)}</td><td><span class="resumo-origem-badge">${badge}</span></td><td>${esc(c.categoria)}</td></tr>`;
         }).join('');
     }
     document.getElementById('resumo-sub-comp').textContent = `Subtotal compartilhados: R$ ${d.totalCompartilhado.toFixed(2)}`;

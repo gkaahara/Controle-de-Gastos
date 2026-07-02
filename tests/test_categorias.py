@@ -59,24 +59,25 @@ class TestCategoriasRoutes:
 
     def test_update_categoria(self, client):
         created = client.post("/categorias", json={"nome": "Antigo"}).get_json()
-        resp = client.post(f"/categorias/{created['id']}/update", json={"nome": "Novo"})
+        resp = client.put(f"/categorias/{created['id']}", json={"nome": "Novo"})
         assert resp.status_code == 200
         assert resp.get_json()["nome"] == "Novo"
 
     def test_update_categoria_not_found(self, client):
-        resp = client.post("/categorias/nonexistent/update", json={"nome": "X"})
+        resp = client.put("/categorias/nonexistent", json={"nome": "X"})
         assert resp.status_code == 404
 
     def test_delete_categoria(self, client):
         created = client.post("/categorias", json={"nome": "Remover"}).get_json()
-        resp = client.post(f"/categorias/{created['id']}/delete")
+        resp = client.delete(f"/categorias/{created['id']}")
         assert resp.status_code == 200
         get_resp = client.get(f"/categorias/{created['id']}")
         assert get_resp.status_code == 404
 
     def test_delete_categoria_not_found(self, client):
-        resp = client.post("/categorias/nonexistent/delete")
+        resp = client.delete("/categorias/nonexistent")
         assert resp.status_code == 404
+
 
     def test_get_categorias_after_create(self, client):
         client.post("/categorias", json={"nome": "A"})
